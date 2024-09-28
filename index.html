@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    :root {
+    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+* {
+    box-sizing: border-box;
+}
+body {
+    background-image: linear-gradient(to top, #09203f 0%, #537895 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+#list
+{background-color: #f5ff97;
+    font-size: large;
+    font-style: inherit;
+
+}
+.container {
+    margin: 30px auto;
+    width: 350px;
+}
+
+h1{
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+h3{
+    border-bottom: 1px solid #bbb;
+    padding-bottom: 10px;
+    margin: 40px 0 10px;
+}
+
+h4{
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.inc-exp-container{
+    background-color: #fff;
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+.inc-exp-container > div{
+    flex: 1;
+    text-align: center;
+}
+
+.inc-exp-container > div:first-of-type {
+    border-right: 1px solid #dedede;
+}
+.money {
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin: 5px 0;
+}
+.money.plus {
+    color: #2ecc71;
+}
+
+.money.minus {
+    color: #c0392b;
+}
+
+label {
+    display: inline-block;
+    margin: 10px 0;
+}
+
+input[type = 'text'], [type = 'number'] {
+    border: 1px solid #dedede;
+    border-radius: 2px;
+    display: block;
+    font-size: 16px;
+    padding: 10px;
+    width: 100%;
+}
+.btn{
+    background-color: #c0392b;
+    border-color:transparent;
+    color: cornsilk;
+    width: 170px;
+    height: 50px;
+    font-size: large;
+    margin-top: 40px;
+    margin-left: 80px;
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
+</style>
+<title>Expense Tracker</title>
+</head>
+<body>
+<h1 style="font-size: xxx-large;color: rgb(127, 220, 20); font-family:Prociono, serif;font-weight: 400;font-style: normal;margin-top: 40px;">Expense Tracker</h1>
+
+<div class="container">
+<h4>Your Balance</h4>
+<h1 id="balance">$0.00</h1>
+
+<div class="inc-exp-container">
+<div>
+<h4>Income</h4>
+<p id="money-plus" class="money plus">+$0.00</p>
+</div>
+
+<div>
+<h4>Expense</h4>
+<p id="money-minus" class="money minus">-$0.00</p>
+</div>
+</div>
+<h3 style="font-size: x-large;color:rgb(229, 255, 0);">History</h3>
+<ul id="list" class="list">
+</ul>
+<h3 style="font-size: x-large;color:orange" >Add new Transaction</h3>
+<form id="form">
+<div class="form-control">☺
+<label for="text" style="font-size: x-large;color: #1c1124">Text</label>
+<input type="text" id="text" placeholder="Enter text...">
+</div>
+<div class="form-control">
+<label for="amount">Amount <br></label>
+<input type="number" id="amount" placeholder="Enter amount...">
+</div>
+<button class="btn">Add transaction</button>
+</form>
+</div>
+<script>
+    const balance = document.getElementById('balance');
+const money_plus = document.getElementById('money-plus');
+const money_minus = document.getElementById('money-minus');
+const list = document.getElementById('list');
+const form = document.getElementById('form');
+const amount = document.getElementById('amount');
+const localStorageTransactions = JSON.parse(localStorage
+    .getItem('transactions'));
+
+let transactions  = localStorage.getItem('transactions') !== null ?
+localStorageTransactions : [];
+
+function addTransaction(e) {
+    e.preventDefault();
+    if(text.value.trim() === '' || amount.value.trim() === ''){
+        alert("Please add a text and amount");
+    }
+    else {
+        const transaction = {
+            id : generateID(),
+            text : text.value,
+            amount : +amount.value
+        };
+        transactions.push(transaction);
+        addTransactionDOM(transaction);
+        updateValues();
+        updateLocalStorage();
+        text.value ='';
+        amount.value ='';
+    }
+} 
+function generateID(){
+    return Math.floor(Math.random() * 100000);
+}
+
+function addTransactionDOM(transaction) {
+    
+    const sign = transaction.amount < 0 ? '-' : '+';
+
+    const item = document.createElement('li');
+
+    item.classList.add(transaction.amount < 0 ?'minus' : 'plus');
+
+    item.innerHTML = `
+        ${transaction.text} <span>${sign}${Math.abs(transaction.amount)}
+        </span> <button class = "delete-btn" onClick ="removeTransaction(${transaction.id})">x</button>`;
+        
+        list.appendChild(item);
+}
+
+function updateValues() {
+    const amounts = transactions.map(transaction => transaction.amount);
+    const total  = amounts.reduce((acc, item) => (acc += item), 0)
+    .toFixed(2); 
+    const income = amounts.filter(item => item > 0)
+    .reduce((acc, item) => (acc += item), 0)
+    .toFixed(2);
+    const expense  = (
+        amounts.filter(item => item < 0) 
+        .reduce((acc, item) =>(acc += item), 0) * -1).toFixed(2);
+    balance.innerHTML = `$${total}`;
+    money_plus.innerHTML = `$${income}`;
+    money_minus.innerHTML = `$${expense}`;
+}
+function removeTransaction(id) {
+    transactions = transactions.filter(transaction => transaction.id
+        !== id);
+        updateLocalStorage();
+        init();
+}
+function updateLocalStorage() {
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+function init() {
+    list.innerHTML = '';
+    transactions.forEach(addTransactionDOM);
+    updateValues();
+}
+init();
+form.addEventListener('submit', addTransaction);
+</script>
+</body>
+</html>
